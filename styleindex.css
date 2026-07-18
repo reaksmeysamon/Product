@@ -4,6 +4,10 @@
     box-sizing:border-box;
     font-family:"Poppins",sans-serif;
 }
+body{
+    margin: 0;
+    padding: 30px;
+}
 
 .header{
     display:flex;
