@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Product Management</title>
+    <link rel="stylesheet" href="./styleindex.css" />
+  </head>
+
+  <body>
+    <body>
+      <h1>Product Management</h1>
+
+      <div class="container">
+        <!-- LEFT SIDE -->
+        <div class="product-form">
+          <h2>Create Product</h2>
+          <p>Enter the product information below.</p>
+
+          <hr />
+
+          <label for="product_name">Product Name</label>
+          <input type="text" id="product_name" />
+
+          <label for="product_category">Category</label>
+          <input type="text" id="product_category" />
+
+          <label for="product_cost">Cost</label>
+          <input type="number" id="product_cost" />
+
+          <label for="product_price">Price</label>
+          <input type="number" id="product_price" />
+
+          <label for="product_image">Product Image URL</label>
+          <input type="text" id="product_image" />
+
+          <div class="button-group">
+            <button id="btn_cancel">Cancel</button>
+            <button id="btn_add">Add Product</button>
+          </div>
+        </div>
+
+        <!-- RIGHT SIDE -->
+        <div class="table-section">
+          <h2>Product List</h2>
+
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Image</th>
+                <th>Name</th>
+                <th>Category</th>
+                <th>Cost</th>
+                <th>Price</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+
+            <tbody id="tb_product"></tbody>
+          </table>
+        </div>
+      </div>
+    </body>
+  </body>
+
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script>
+    // Get Element
+    let product_name = document.getElementById("product_name");
+    let product_category = document.getElementById("product_category");
+    let product_cost = document.getElementById("product_cost");
+    let product_price = document.getElementById("product_price");
+    let product_image = document.getElementById("product_image");
+
+    let btn_cancel = document.getElementById("btn_cancel");
+    let btn_add = document.getElementById("btn_add");
+
+    let tb_product = document.getElementById("tb_product");
+
+    // Local Storage
+    let storage = localStorage.getItem("product_list");
+    let product_list = storage == null ? [] : JSON.parse(storage);
+    let global_index = -1;
+
+    renderProduct();
+
+    // Add Product
+    btn_add.addEventListener("click", function () {
+      let name = product_name.value;
+      let category = product_category.value;
+      let cost = product_cost.value;
+      let price = product_price.value;
+      let image = product_image.value;
+
+      // Validation
+      if (
+        name.trim() == "" ||
+        category.trim() == "" ||
+        cost == "" ||
+        price == "" ||
+        image.trim() == ""
+      ) {
+        alert("Please fill all information.");
+        return;
+      }
+
+      // Add Product
+      if (global_index == -1) {
+        product_list.push({
+          id: product_list.length + 1,
+          name: name,
+          category: category,
+          cost: Number(cost),
+          price: Number(price),
+          image: image,
+        });
+      } else {
+        product_list[global_index].name = name;
+        product_list[global_index].category = category;
+        product_list[global_index].cost = Number(cost);
+        product_list[global_index].price = Number(price);
+        product_list[global_index].image = image;
+      }
+      // Save Local Storage
+      localStorage.setItem("product_list", JSON.stringify(product_list));
+
+      renderProduct();
+      clearForm();
+    });
+
+    // Clear Form after add
+    btn_cancel.addEventListener("click", function () {
+      clearForm();
+    });
+
+    // Render Product
+    function renderProduct() {
+      let tr = "";
+
+      for (let product of product_list) {
+        tr += `
+            <tr>
+                <td>${product.id}</td>
+                <td>
+                    <img src="${product.image}" 
+                         width="50"
+                         height="50"
+                         alt="Product Image"
+                         onerror="this.src='https://via.placeholder.com/50';">
+                </td>
+                <td>${product.name}</td>
+                <td>${product.category}</td>
+                <td>${product.cost}</td>
+                <td>${product.price}</td>
+                <td>
+                    <button onclick="editProductItem(${product.id})">Edit</button>
+                    <button onclick="deleteProductItem(${product.id})">Delete</button>
+                </td>
+            </tr>
+            `;
+      }
+
+      tb_product.innerHTML = tr;
+    }
+
+    // edit items
+    function editProductItem(product_id) {
+      let index = -1;
+      // find
+      for (let i = 0; i < product_list.length; i++) {
+        if (product_list[i].id == product_id) {
+          index = i;
+          break;
+        }
+      }
+      // update
+      if (index > -1) {
+        global_index = index;
+
+        product_name.value = product_list[index].name;
+        product_category.value = product_list[index].category;
+        product_cost.value = product_list[index].cost;
+        product_price.value = product_list[index].price;
+        product_image.value = product_list[index].image;
+
+        btn_add.innerText = "Update Product";
+      }
+    }
+
+    // delete items
+    function deleteProductItem(product_id) {
+      let index = -1;
+      for (let i = 0; i < product_list.length; i++) {
+        if (product_list[i].id === product_id) {
+          index = i;
+          break;
+        }
+      }
+      Swal.fire({
+        title: "Are you sure?",
+        text: "You won't be able to revert this!",
+        icon: "question",
+        showCancelButton: true,
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
+        confirmButtonText: "Yes, delete it!",
+      }).then((result) => {
+        if (result.isConfirmed) {
+          product_list.splice(index, 1);
+          localStorage.setItem("product_list", JSON.stringify(product_list));
+          renderProduct();
+        }
+      });
+    }
+
+    // Clear Form after add
+    function clearForm() {
+      product_name.value = "";
+      product_category.value = "";
+      product_cost.value = "";
+      product_price.value = "";
+      product_image.value = "";
+
+      product_name.focus();
+
+      global_index = -1;
+      btn_add.innerText = "Add Product";
+    }
+  </script>
+</html>

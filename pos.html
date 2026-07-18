@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mini POS</title>
+    <link rel="stylesheet" href="./stylepos.css" />
+  </head>
+  <body>
+    <h1>Mini POS</h1>
+    <p>Select products to add them to the order</p>
+
+    <div class="container">
+      <div id="product_grid"></div>
+
+      <aside>
+        <div class="cartHeader">
+          <h3>Current Order</h3>
+        </div>
+
+        <div id="cartItems"></div>
+
+        <div class="checkout">
+          <div class="total">
+            <span>Total</span>
+            <span id="total">$0.00</span>
+          </div>
+
+          <div class="totalKHR">
+            <span>Total (KHR)</span>
+            <span id="totalKHR">0 Riel</span>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </body>
+
+  <script>
+    let product_list = localStorage.getItem("product_list");
+    product_list = JSON.parse(product_list);
+    let selectedProduct = [];
+
+    const productGrid = document.querySelector("#product_grid");
+    const cartItems = document.querySelector("#cartItems");
+    const totalElement = document.getElementById("total");
+    const totalKHRElement = document.getElementById("totalKHR");
+    productGrid.innerHTML = "";
+    renderProduct();
+
+    // take info from local
+    function renderProduct() {
+      product_list.forEach((product) => {
+        const productCard = document.createElement("article");
+        productCard.classList.add("productCard");
+        productCard.style.height = "260px";
+
+        productCard.innerHTML = `
+            <div class = "product_image" onclick = "onClickProduct('${product.id}')">
+              <img src="${product.image}" alt = "${product.name}" width = "100">
+            </div>
+
+            <div class = "product_info" onclick = "onClickProduct('${product.id}')">
+              <div class = "category_label">${product.category}</div>
+              <div class = "title_label">${product.name}</div>
+              <div class = "price_label">$${product.price.toFixed(2)}</div>
+            </div>
+                `;
+        productGrid.appendChild(productCard);
+      });
+    }
+
+    // click on items
+    function onClickProduct(id) {
+      product_list.forEach(function (product) {
+        if (product.id == id) {
+          let dpl = selectedProduct.findIndex(
+            (product) => product.id === Number(id),
+          );
+          console.log(dpl);
+          if (dpl === -1) {
+            product.qty = 1;
+            selectedProduct.push(product);
+          } else {
+            selectedProduct[dpl].qty++;
+          }
+          getTotal();
+        }
+      });
+
+      renderCart();
+    }
+
+    // after click
+    function renderCart() {
+      cartItems.innerHTML = "";
+
+      selectedProduct.forEach(function (product) {
+        let div = document.createElement("div");
+        div.classList.add("cart_item");
+        div.innerHTML = `
+            <img src="${product.image}" width="40">
+            <h4>${product.name}</h4>
+            <p>$${product.price.toFixed(2)}</p>
+            
+            <div class = "qtyControl">
+              <button class = "qty-btn" onclick="decreaseQty(${product.id})">-</button>
+              <span class = "qty-value">${product.qty}</span>
+              <button class = "qty-btn" onclick="increaseQty(${product.id})">+</button>
+            </div>
+
+            <div>
+              <div class = "item-total">$${(product.price * product.qty).toFixed(2)}</div>
+              <button class="remove-btn" onclick="removeProduct(${product.id})">Remove</button>
+            </div>
+        `;
+        cartItems.appendChild(div);
+      });
+    }
+
+    // buttom + items
+    function increaseQty(id) {
+      for (let product of selectedProduct) {
+        if (product.id == id) {
+          product.qty++;
+          break;
+        }
+      }
+
+      renderCart();
+      getTotal();
+    }
+
+    // buttom - items
+    function decreaseQty(id) {
+      for (let product of selectedProduct) {
+        if (product.id == id) {
+          product.qty--;
+
+          if (product.qty <= 0) {
+            removeProduct(id);
+            return;
+          }
+
+          break;
+        }
+      }
+
+      renderCart();
+      getTotal();
+    }
+
+    // buttom remove items
+    function removeProduct(id) {
+      let index = -1;
+
+      for (let i = 0; i < selectedProduct.length; i++) {
+        if (selectedProduct[i].id == id) {
+          index = i;
+          break;
+        }
+      }
+
+      if (index > -1) {
+        selectedProduct.splice(index, 1);
+      }
+
+      renderCart();
+      getTotal();
+    }
+
+    //total
+    function getTotal() {
+      let total = 0;
+      selectedProduct.forEach((item) => {
+        total += item.price * item.qty;
+      });
+      totalElement.innerHTML = "$" + total.toFixed(2);
+      totalKHRElement.innerHTML =
+        (total * 4100).toLocaleString("en-US") + " Riel";
+    }
+  </script>
+</html>
